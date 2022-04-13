@@ -2,7 +2,7 @@
 
 This is a repository of the experiment code supporting the paper **Real-time Bidding Strategy in Display Advertising: An Empirical Analysis**.
 
-Chinese README: 
+Chinese README: [README-zh](https://github.com/hzn666/RLBid_EA/blob/master/README-zh.MD)
 
 ## Getting Started
 
@@ -42,8 +42,7 @@ This repository implements 2 static bidding strategies and 3 dynamic bidding str
 
 ## License
 
-This project is licensed under the Apache License 2.0 License.
-
+This project is licensed under the Apache License 2.0.
 ## Acknowledgments
 
 *  [@JiaXingBinggan](https://github.com/JiaXingBinggan) contributed the CTR prediction model code for this repository.
