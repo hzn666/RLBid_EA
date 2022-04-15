@@ -217,7 +217,7 @@ def choose_init_lamda(budget_para):
 
 def run_train(budget_para):
     # 读取训练数据 并舍弃第一行
-    train_data = pd.read_csv(config['data_path'] + config['campaign_id'] + 'train.bid.all.hb.csv', header=None).drop(
+    train_data = pd.read_csv(config['data_path'] + config['campaign_id'] + 'train.bid.all.lin.csv', header=None).drop(
         [0])
     if config['time_fraction'] == 96:
         train_data = train_data.iloc[:, [0, 1, 2, 4, 7]]
@@ -485,7 +485,7 @@ def run_train(budget_para):
 
 def run_test(budget_para):
     # 读取测试数据 并舍弃第一行
-    test_data = pd.read_csv(config['data_path'] + config['campaign_id'] + 'test.bid.all.hb.csv', header=None).drop([0])
+    test_data = pd.read_csv(config['data_path'] + config['campaign_id'] + 'test.bid.all.lin.csv', header=None).drop([0])
     if config['time_fraction'] == 96:
         test_data = test_data.iloc[:, [0, 1, 2, 4, 7]]
     elif config['time_fraction'] == 48:

@@ -50,8 +50,8 @@ python ctr/generate_pctr.py --campaign_id 1458 --ctr_model FM
 
 ```
 1458
-├── train.bid.hb.csv - HB和DRLB使用的训练集
-├── test.bid.hb.csv - HB和DRLB使用的测试集
+├── train.bid.lin.csv - LIN和DRLB使用的训练集
+├── test.bid.lin.csv - LIN和DRLB使用的测试集
 ├── test.bid.rlb.txt - RLB使用的数据集
 └── ...
 ```

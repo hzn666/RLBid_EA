@@ -55,8 +55,8 @@ python ctr/generate_pctr.py --campaign_id 1458 --ctr_model FM
 
 ```
 1458
-├── train.bid.hb.csv - training set for LIN, DRLB and so on 
-├── test.bid.hb.csv - testing set for LIN, DRLB and so on 
+├── train.bid.lin.csv - training set for LIN, DRLB and so on 
+├── test.bid.lin.csv - testing set for LIN, DRLB and so on 
 ├── test.bid.rlb.txt - dataset for RLB
 └── ...
 ```

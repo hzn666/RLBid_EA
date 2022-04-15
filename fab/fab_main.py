@@ -163,8 +163,8 @@ def get_dataset(args):
     data_path = args.data_path + args.dataset_name + args.campaign_id
 
     # 获取数据
-    train_data_df = pd.read_csv(data_path + 'train.bid.' + args.sample_type + '.hb.csv')
-    test_data_df = pd.read_csv(data_path + 'test.bid.' + args.sample_type + '.hb.csv')
+    train_data_df = pd.read_csv(data_path + 'train.bid.' + args.sample_type + '.lin.csv')
+    test_data_df = pd.read_csv(data_path + 'test.bid.' + args.sample_type + '.lin.csv')
 
     # 获取每日预算、ecpc、平均点击率、平均成交价
     budget = []

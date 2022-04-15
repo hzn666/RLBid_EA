@@ -232,7 +232,7 @@ if __name__ == '__main__':
 
     for cam in campaigns:
         train_data[cam] = []
-        train_data_df = pd.read_csv("../data/ipinyou/{}/train.bid.all.hb.csv".format(cam))
+        train_data_df = pd.read_csv("../data/ipinyou/{}/train.bid.all.lin.csv".format(cam))
         for row in train_data_df.itertuples():
             train_data[cam].append(
                 (int(getattr(row, 'clk')), int(getattr(row, 'market_price')), float(getattr(row, 'pctr'))))
@@ -246,7 +246,7 @@ if __name__ == '__main__':
     test_cost = 0.
     for cam in campaigns:
         test_data[cam] = []
-        test_data_df = pd.read_csv("../data/ipinyou/{}/test.bid.all.hb.csv".format(cam))
+        test_data_df = pd.read_csv("../data/ipinyou/{}/test.bid.all.lin.csv".format(cam))
         for row in test_data_df.itertuples():
             test_data[cam].append(
                 (int(getattr(row, 'clk')), int(getattr(row, 'market_price')), float(getattr(row, 'pctr'))))

@@ -79,8 +79,8 @@ if __name__ == '__main__':
     test_df['96_time_fraction'] = test_df['24_time_fraction'] * 4 + (
         test_df['minutes'].apply(lambda x: int(int(str(x)[10:12]) / 15)))
 
-    train_df.to_csv(os.path.join(data_path, 'train.bid.hb.csv'), index=None)
-    test_df.to_csv(os.path.join(data_path, 'test.bid.hb.csv'), index=None)
+    train_df.to_csv(os.path.join(data_path, 'train.bid.lin.csv'), index=None)
+    test_df.to_csv(os.path.join(data_path, 'test.bid.lin.csv'), index=None)
 
     # 生成RLB数据
     origin_data = test_df
