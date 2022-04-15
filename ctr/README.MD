@@ -2,7 +2,7 @@
 
 Take dataset 1458 as an example
 
-Chinese README: [README-zh]()
+Chinese README: [README-zh](https://github.com/hzn666/RLBid_EA/blob/master/ctr/README.MD)
 
 ## Data 
 
