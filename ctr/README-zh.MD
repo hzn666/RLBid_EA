@@ -20,7 +20,7 @@ ipinyou
 运行 `ctr_data.py`，生成特征索引后的数据集
 
 ```
-python ctr/ctr_data.py --campaign_id 1458
+*/RLBid_EA/ctr$ python ctr_data.py --campaign_id=1458
 ```
 
 ```
@@ -34,7 +34,7 @@ python ctr/ctr_data.py --campaign_id 1458
 运行 `ctr_main.py` 进行训练
 
 ```
-python ctr/ctr_main.py --campaign_id 1458 --ctr_model FM
+*/RLBid_EA/ctr$ python ctr_main.py --campaign_id=1458 --ctr_model=FM
 ```
 
 支持的模型有`LR`, `FM`, `FFM`, `W&D`, `DeepFM`, `FNN`, `IPNN`, `OPNN`, `DCN`, `AFM`
@@ -45,7 +45,7 @@ python ctr/ctr_main.py --campaign_id 1458 --ctr_model FM
 运行 `generate_pctr.py` 生成用于训练出价策略的pCTR数据
 
 ```
-python ctr/generate_pctr.py --campaign_id 1458 --ctr_model FM
+*/RLBid_EA/ctr$ python generate_pctr.py --campaign_id=1458 --ctr_model=FM
 ```
 
 ```

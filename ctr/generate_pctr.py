@@ -6,7 +6,6 @@ import pandas as pd
 import torch
 from tqdm import tqdm
 
-
 if __name__ == '__main__':
     args = config.init_parser()
     train_data, val_data, test_data, field_nums, feature_nums = get_dataset(args)
@@ -49,27 +48,25 @@ if __name__ == '__main__':
     test_ctrs.extend(tail.flatten().tolist())
 
     # # click + winning price + hour + timestamp + encode 生成FAB要用的数据
-    train_fab = {'clk': train_data[:, 0].tolist(),
-                 'pctr': train_ctrs,
-                 'market_price': train_data[:, 1].tolist(),
-                 '24_time_fraction': train_data[:, 2].tolist(),
-                 'minutes': train_data[:, 4].tolist(),
-                 }
+    train = {'clk': train_data[:, 0].tolist(),
+             'pctr': train_ctrs,
+             'market_price': train_data[:, 1].tolist(),
+             'minutes': train_data[:, 4].tolist(),
+             '24_time_fraction': train_data[:, 2].tolist(),
+             }
 
-    test_fab = {'clk': test_data[:, 0].tolist(),
-                'pctr': test_ctrs,
-                'market_price': test_data[:, 1].tolist(),
-                '24_time_fraction': test_data[:, 2].tolist(),
-                'minutes': test_data[:, 4].tolist()
-                }
+    test = {'clk': test_data[:, 0].tolist(),
+            'pctr': test_ctrs,
+            'market_price': test_data[:, 1].tolist(),
+            'minutes': test_data[:, 4].tolist(),
+            '24_time_fraction': test_data[:, 2].tolist(),
+            }
     #
     data_path = os.path.join(args.data_path, args.dataset_name, args.campaign_id)
-    train_df = pd.DataFrame(data=train_fab)
-    test_df = pd.DataFrame(data=test_fab)
+    train_df = pd.DataFrame(data=train)
+    test_df = pd.DataFrame(data=test)
 
-    # 生成HB数据和DRLB数据
-    train_df['day'] = train_df.minutes.apply(lambda x: int(str(x)[6:8]))
-    test_df['day'] = test_df.minutes.apply(lambda x: int(str(x)[6:8]))
+    # 生成LIN数据和DRLB数据
     train_df['48_time_fraction'] = train_df['24_time_fraction'] * 2 + (
         train_df['minutes'].apply(lambda x: int(int(str(x)[10:12]) / 30)))
     test_df['48_time_fraction'] = test_df['24_time_fraction'] * 2 + (
@@ -78,6 +75,8 @@ if __name__ == '__main__':
         train_df['minutes'].apply(lambda x: int(int(str(x)[10:12]) / 15)))
     test_df['96_time_fraction'] = test_df['24_time_fraction'] * 4 + (
         test_df['minutes'].apply(lambda x: int(int(str(x)[10:12]) / 15)))
+    train_df['day'] = train_df.minutes.apply(lambda x: int(str(x)[6:8]))
+    test_df['day'] = test_df.minutes.apply(lambda x: int(str(x)[6:8]))
 
     train_df.to_csv(os.path.join(data_path, 'train.bid.lin.csv'), index=None)
     test_df.to_csv(os.path.join(data_path, 'test.bid.lin.csv'), index=None)
