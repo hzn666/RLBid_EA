@@ -27,7 +27,7 @@
 | DCN    | Deep & cross network for ad click predictions                | [[paper]](https://dl.acm.org/doi/abs/10.1145/3124749.3124754) |
 | AFM    | Attentional factorization machines: Learning the weight of feature interactions via attention networks | [[paper]](https://arxiv.org/abs/1708.04617)                  |
 
-具体的使用方法请参见 [README]()
+具体的使用方法请参见 [README](https://github.com/hzn666/RLBid_EA/blob/master/ctr/README-zh.MD)
 
 ## 出价策略
 
