@@ -11,8 +11,8 @@ By placing the `ipinyou` dataset in the `data/ipinyou` directory, your directory
 ```
 ipinyou
 ├── 1458
-	├── train.log.txt - training set
-	├── test.log.txt - testing set
+    ├── train.log.txt - training set
+    ├── test.log.txt - testing set
 ├── 3358
 └── ...
 ```
