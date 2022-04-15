@@ -9,8 +9,8 @@
 ```
 ipinyou
 ├── 1458
-	├── train.log.txt - 训练集
-	├── test.log.txt - 测试集
+    ├── train.log.txt - 训练集
+    ├── test.log.txt - 测试集
 ├── 3358
 └── ...
 ```
