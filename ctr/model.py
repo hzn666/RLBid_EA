@@ -110,7 +110,8 @@ class FFM(nn.Module):
         # 总共有n(n-1)/2种组合方式，n=self.field_nums
 
         second_x = torch.stack(second_x,
-                               dim=1)  # torch.stack(), torch.cat() https://blog.csdn.net/excellent_sun/article/details/95175823
+                               dim=1)
+        # torch.stack(), torch.cat() https://blog.csdn.net/excellent_sun/article/details/95175823
 
         out = self.bias + torch.sum(self.linear(x), dim=1) + torch.sum(torch.sum(second_x, dim=1), dim=1, keepdim=True)
         pctrs = torch.sigmoid(out)

@@ -14,8 +14,6 @@ import torch.utils.data
 import logging
 import sys
 
-import threading
-
 import config
 from itertools import islice
 
@@ -59,14 +57,14 @@ def get_dataset(args):
     data_path = args.data_path + args.dataset_name + args.campaign_id
 
     # click + winning price + hour + time_fraction + timestamp
-    train_data = pd.read_csv(data_path + 'train.bid.all.txt', header=None).values.astype(int)
+    train_data = pd.read_csv(os.path.join(data_path, 'train.bid.txt'), header=None).values.astype(int)
     field_nums = train_data.shape[1] - 5  # 17
 
-    val_data = pd.read_csv(data_path + 'test.bid.all.txt', header=None).values.astype(int)
+    val_data = pd.read_csv(os.path.join(data_path, 'test.bid.txt'), header=None).values.astype(int)
 
-    test_data = pd.read_csv(data_path + 'test.bid.' + args.sample_type + '.txt', header=None).values.astype(int)
+    test_data = pd.read_csv(os.path.join(data_path, 'test.bid.txt'), header=None).values.astype(int)
 
-    with open(data_path + 'feat.bid.all.txt') as feat_f:
+    with open(os.path.join(data_path, 'feat.bid.txt')) as feat_f:
         feature_nums = int(list(islice(feat_f, 0, 1))[0].replace('\n', ''))
 
     return train_data, val_data, test_data, field_nums, feature_nums
@@ -149,8 +147,8 @@ def main(model, model_name, train_data_loader, val_data_loader, test_data_loader
         # 训练
         train_average_loss = train(model, optimizer, train_data_loader, loss, device)
         # 这里只会存最近5个模型的参数
-        torch.save(model.state_dict(), args.save_param_dir + args.campaign_id + model_name + str(
-            np.mod(epoch, args.early_stop_iter)) + '.pth')
+        torch.save(model.state_dict(), os.path.join(args.save_param_dir, args.campaign_id, model_name + str(
+            np.mod(epoch, args.early_stop_iter)) + '.pth'))
         # 验证
         auc, valid_loss = test(model, val_data_loader, loss, device)
         valid_aucs.append(auc)
@@ -162,8 +160,7 @@ def main(model, model_name, train_data_loader, val_data_loader, test_data_loader
                                                                                       epoch,
                                                                                       train_average_loss,
                                                                                       auc, valid_loss,
-                                                                                      (
-                                                                                                  train_end_time - train_start_time).seconds))
+                                                                                      (train_end_time - train_start_time).seconds))
 
         if eva_stopping(valid_aucs, valid_losses, args.early_stop_type, args):
             early_stop_index = np.mod(epoch - args.early_stop_iter + 1, args.early_stop_iter)
@@ -175,8 +172,8 @@ def main(model, model_name, train_data_loader, val_data_loader, test_data_loader
     if is_early_stop:
         # 如果早停，测试阶段就要使用之前的最优参数
         test_model = get_model(model_name, feature_nums, field_nums, args.latent_dims).to(device)
-        load_path = args.save_param_dir + args.campaign_id + model_name + str(
-            early_stop_index) + '.pth'
+        load_path = os.path.join(args.save_param_dir, args.campaign_id, model_name + str(
+            early_stop_index) + '.pth')
 
         test_model.load_state_dict(torch.load(load_path, map_location=device))  # 加载最优参数
     else:
@@ -184,14 +181,14 @@ def main(model, model_name, train_data_loader, val_data_loader, test_data_loader
 
     test_predicts, test_auc = submission(test_model, test_data_loader, device)
     torch.save(test_model.state_dict(),
-               args.save_param_dir + args.campaign_id + model_name + args.sample_type + 'best.pth')  # 存储最优参数
+               os.path.join(args.save_param_dir, args.campaign_id, model_name + 'best.pth'))  # 存储最优参数
 
     logger.info('Model {}, test auc {} [total time: {}s]'.format(model_name, test_auc,
                                                                  (end_time - start_time).seconds))
 
     # 删除训练过程中记录的多余模型参数
     for i in range(args.early_stop_iter):
-        os.remove(args.save_param_dir + args.campaign_id + model_name + str(i) + '.pth')
+        os.remove(os.path.join(args.save_param_dir, args.campaign_id, model_name + str(i) + '.pth'))
 
     return test_predicts
 
@@ -223,8 +220,7 @@ def eva_stopping(valid_aucs, valid_losses, type, args):
 
 # 用于预训练传统预测点击率模型
 if __name__ == '__main__':
-    campaign_id = '1458/'
-    args = config.init_parser(campaign_id)
+    args = config.init_parser()
     # 获取数据集
     train_data, val_data, test_data, field_nums, feature_nums = get_dataset(args)
 
@@ -244,7 +240,7 @@ if __name__ == '__main__':
     setup_seed(args.seed)
 
     logging.basicConfig(level=logging.DEBUG,
-                        filename=args.save_log_dir + args.campaign_id + 'output.log',
+                        filename=os.path.join(args.save_log_dir, args.campaign_id, 'output.log'),
                         datefmt='%Y/%m/%d %H:%M:%S',
                         format='%(asctime)s - %(name)s - %(levelname)s - %(lineno)d - %(module)s - %(message)s')
 
@@ -267,8 +263,8 @@ if __name__ == '__main__':
 
     device = torch.device(args.device)  # 指定运行设备
 
-    choose_models = [args.ctr_model_name]
-    logger.info(campaign_id)
+    choose_models = [args.ctr_model]
+    logger.info(args.campaign_id)
     logger.info('Models ' + ','.join(choose_models) + ' have been trained')
 
     test_predict_arr_dicts = {}
@@ -286,7 +282,7 @@ if __name__ == '__main__':
                                      weight_decay=args.weight_decay)
 
         if model_name == 'FNN':
-            FM_pretain_args = torch.load(args.save_param_dir + args.campaign_id + 'FM' + args.sample_type + 'best.pth')
+            FM_pretain_args = torch.load(os.path.join(args.save_param_dir, args.campaign_id, 'FMbest.pth'))
             model.load_embedding(FM_pretain_args)
 
         current_model_test_predicts = main(model, model_name, train_data_loader, val_data_loader, test_data_loader,
@@ -294,24 +290,22 @@ if __name__ == '__main__':
 
         test_predict_arr_dicts[model_name].append(current_model_test_predicts)
 
+    # submission
     for key in test_predict_arr_dicts.keys():
-        submission_path = args.data_path + args.dataset_name + args.campaign_id + key + '/ctr/'  # ctr 预测结果存放文件夹位置
+        submission_path = os.path.join('results')  # ctr 预测结果存放文件夹位置
 
-        sub_dirs = [args.data_path + args.dataset_name + args.campaign_id + key + '/',
-                    args.data_path + args.dataset_name + args.campaign_id + key + '/ctr/']
-        for sub_dir in sub_dirs:
-            if not os.path.exists(sub_dir):
-                os.mkdir(sub_dir)
+        if not os.path.exists(submission_path):
+            os.mkdir(submission_path)
 
         # 测试集submission
         final_sub = np.mean(test_predict_arr_dicts[key], axis=0)
         test_pred_df = pd.DataFrame(data=final_sub)
-        test_pred_df.to_csv(submission_path + 'test_submission_' + args.sample_type + '.csv', header=None)
+        test_pred_df.to_csv(os.path.join(submission_path, key + '_test_submission.csv'), header=None)
 
         final_auc = roc_auc_score(test_data[:, 0: 1].tolist(), final_sub.reshape(-1, 1).tolist())
         day_aucs = [[final_auc]]
         day_aucs_df = pd.DataFrame(data=day_aucs)
-        day_aucs_df.to_csv(submission_path + 'day_aucs_' + args.sample_type + '.csv', header=None)
+        day_aucs_df.to_csv(os.path.join(submission_path, key + '_auc.csv'), header=None)
 
         if args.dataset_name == 'ipinyou/':
             logger.info('Model {}, dataset {}, campain {}, test auc {}\n'.format(key, args.dataset_name,

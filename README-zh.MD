@@ -11,7 +11,7 @@
 
 ### CTR预测
 
-在训练出价策略前，首先需预测每个广告曝光的点击率。我们在 `RLBid_EA/ctr/models/model_params` 提供了4个数据集的FM预训练模型参数，你可以配合 `RLBid_EA/ctr/generate_pctr.py` 使用。
+在训练出价策略前，首先需预测每个广告曝光的点击率。我们在 `RLBid_EA/ctr/models` 提供了4个数据集的FM预训练模型参数，你可以配合 `RLBid_EA/ctr/generate_pctr.py` 使用。
 
 你当然也能够自己训练一个CTR预测器。`RLBid_EA/ctr/model.py` 实现了9个经典的点击率预测模型。
 
@@ -27,6 +27,8 @@
 | DCN    | Deep & cross network for ad click predictions                | [[paper]](https://dl.acm.org/doi/abs/10.1145/3124749.3124754) |
 | AFM    | Attentional factorization machines: Learning the weight of feature interactions via attention networks | [[paper]](https://arxiv.org/abs/1708.04617)                  |
 
+具体的使用方法请参见 [README]()
+
 ## 出价策略
 
 本仓库实现了2个静态出价策略和3个基于强化学习的动态出价策略。
@@ -38,6 +40,8 @@
 | RLB  | Real-time bidding by reinforcement learning in display advertising | [[paper]](https://dl.acm.org/doi/abs/10.1145/3018661.3018702) [[code]](https://github.com/han-cai/rlb-dp) |
 | DRLB | Budget constrained bidding by model-free reinforcement learning in display advertising | [[paper]](https://dl.acm.org/doi/abs/10.1145/3269206.3271748) |
 | FAB  | A dynamic bidding strategy based on model-free reinforcement learning in display advertising | [[paper]](https://ieeexplore.ieee.org/abstract/document/9258910/) [[code]](https://github.com/JiaXingBinggan/FAB_expr) |
+
+具体的使用方法请参见每个文件夹下的README
 
 ## 许可证
 

@@ -1,30 +1,63 @@
-# CTR Predition
+# CTR Prediction
 
-## 数据准备
-* 将ipinyou数据集放到data/ipinyou目录下
+Take dataset 1458 as an example
+
+Chinese README: [README-zh]()
+
+## Data 
+
+By placing the `ipinyou` dataset in the `data/ipinyou` directory, your directory structure should be as follows
+
 ```
-info.json - RLB仓库给出的数据集信息，参见https://github.com/han-cai/rlb-dp
-train.log.txt - 原始训练集，参见https://github.com/wnzhang/make-ipinyou-data
-test.log.txt - 原始测试集，参见https://github.com/wnzhang/make-ipinyou-data
+ipinyou
+├── 1458
+	├── train.log.txt - training set
+	├── test.log.txt - testing set
+├── 3358
+└── ...
 ```
-* 修改ctr_data.py第270行，指定数据集
-* 运行ctr_data.py，为指定数据集生成对应的文件
+
+## Feature Indexing
+
+Run `ctr_data.py` to generate the dataset after Feature Indexing
+
 ```
-feat.bid.all.txt - 特征映射表
-train.bid.all.txt - 特征映射后的训练集
-test.bid.all.txt - 特征映射后的测试集
+python ctr/ctr_data.py --campaign_id 1458
 ```
-## 训练
-* 首先修改ctr_main.py第239行指定数据集
-* 然后修改config.py第20行指定模型
-* 运行ctr_main.py，模型参数会保存在ctr/models/model_params/{数据集}中
-## 生成pctr数据
-* 修改config.py第20行指定模型
-* 修改generate_pctr_data.py第27行指定数据集
-* 代码会自动加载最优的模型参数
-* 运行generate_pctr_data.py生成pctr数据
+
 ```
-train.bid.all.hb.csv - HB和DRLB使用的训练集
-test.bid.all.hb.csv - HB和DRLB使用的测试集
-test.bid.all.rlb.txt - RLB使用的数据集
+1458
+├── feat.bid.txt - feature index
+├── train.bid.txt - training set after feature indexing
+├── test.bid.txt - training set after feature indexing
+└── ...
 ```
+
+## Train
+
+Run  `ctr_main.py`  for training
+
+```
+python ctr/ctr_main.py --campaign_id 1458 --ctr_model FM
+```
+
+Support models: `LR`, `FM`, `FFM`, `W&D`, `DeepFM`, `FNN`, `IPNN`, `OPNN`, `DCN`, `AFM`
+
+Best model parameters are stored in `ctr/models/1458`, e.g. `FMbest.pth`
+
+## Generate pCTR
+
+Run `generate_pctr.py` to generate pCTR data for training bidding strategies
+
+```
+python ctr/generate_pctr.py --campaign_id 1458 --ctr_model FM
+```
+
+```
+1458
+├── train.bid.hb.csv - training set for LIN, DRLB and so on 
+├── test.bid.hb.csv - testing set for LIN, DRLB and so on 
+├── test.bid.rlb.txt - dataset for RLB
+└── ...
+```
+

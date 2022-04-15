@@ -17,7 +17,7 @@ def to_time_frac(hour, min, time_frac_dict):
             return str(time_frac_dict[hour][key])
 
 
-def to_libsvm_encode(datapath, sample_type, time_frac_dict):
+def to_libsvm_encode(datapath, time_frac_dict):
     print('转换为libsvm编码')
     oses = ["windows", "ios", "mac", "android", "linux"]
     browsers = ["chrome", "sogou", "maxthon", "safari", "firefox", "theworld", "opera", "ie"]
@@ -26,8 +26,6 @@ def to_libsvm_encode(datapath, sample_type, time_frac_dict):
            "slotvisibility", "slotformat", "creative", "advertiser"]
 
     f1sp = ["useragent", "slotprice"]
-
-    f2s = ["weekday,region"]
 
     def feat_trans(name, content):
         # 特征转换
@@ -69,7 +67,7 @@ def to_libsvm_encode(datapath, sample_type, time_frac_dict):
     featindex = {}  # 特征索引字典
     maxindex = 0  # 最大索引
 
-    fi = open(datapath + 'train.bid.all.csv', 'r')
+    fi = open(os.path.join(datapath, 'train.bid.csv'), 'r')
 
     first = True
 
@@ -118,16 +116,16 @@ def to_libsvm_encode(datapath, sample_type, time_frac_dict):
     featvalue = sorted(featindex.items(), key=operator.itemgetter(1))
 
     # 写特征索引表
-    fo = open(datapath + 'feat.bid.all.txt', 'w')
+    fo = open(os.path.join(datapath, 'feat.bid.txt'), 'w')
     fo.write(str(maxindex) + '\n')
     for fv in featvalue:
         fo.write(fv[0] + '\t' + str(fv[1]) + '\n')
     fo.close()
 
     # indexing train
-    print('indexing ' + datapath + 'train.bid.all.csv')
-    fi = open(datapath + 'train.bid.all.csv', 'r')
-    fo = open(datapath + 'train.bid.all.txt', 'w')
+    print('indexing ' + datapath + '/train.bid.csv')
+    fi = open(os.path.join(datapath, 'train.bid.csv'), 'r')
+    fo = open(os.path.join(datapath, 'train.bid.txt'), 'w')
 
     first = True
     for line in fi:
@@ -172,9 +170,9 @@ def to_libsvm_encode(datapath, sample_type, time_frac_dict):
     fo.close()
 
     # indexing test
-    print('indexing ' + datapath + 'test.bid.' + sample_type + '.csv')
-    fi = open(datapath + 'test.bid.' + sample_type + '.csv', 'r')
-    fo = open(datapath + 'test.bid.' + sample_type + '.txt', 'w')
+    print('indexing ' + datapath + '/test.bid.csv')
+    fi = open(os.path.join(datapath, 'test.bid.csv'), 'r')
+    fo = open(os.path.join(datapath, 'test.bid.txt'), 'w')
 
     first = True
     for line in fi:
@@ -220,16 +218,16 @@ def to_libsvm_encode(datapath, sample_type, time_frac_dict):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_path', default='../data/')
-    parser.add_argument('--dataset_name', default='ipinyou/', help='ipinyou')
-    parser.add_argument('--campaign_id', default='1458/', help='1458, 3427')
+    parser.add_argument('--data_path', default='../data')
+    parser.add_argument('--dataset_name', default='ipinyou', help='ipinyou')
+    parser.add_argument('--campaign_id', default='1458', help='e.g. 1458')
     parser.add_argument('--is_to_csv', default=True)
 
     setup_seed(1)
 
     args = parser.parse_args()
     print("数据集：" + args.campaign_id)
-    data_path = args.data_path + args.dataset_name + args.campaign_id
+    data_path = os.path.join(args.data_path, args.dataset_name, args.campaign_id)
 
     # 时间分段为96个段 每15分钟一个
     time_frac_dict = {}  # 时间分段字典
@@ -244,24 +242,23 @@ if __name__ == '__main__':
     # 转换为csv
     if args.is_to_csv:
         print('转换为csv')
-        file_name = 'train.log.txt'
-        with open(data_path + 'train.bid.all.csv', 'w', newline='') as csv_file:  # newline防止每两行就空一行
+
+        with open(os.path.join(data_path, 'train.bid.csv'), 'w', newline='') as csv_file:  # newline防止每两行就空一行
             spam_writer = csv.writer(csv_file, dialect='excel')  # 读要转换的txt文件，文件每行各词间以@@@字符分隔
-            with open(data_path + file_name, 'r') as filein:
+            with open(os.path.join(data_path, 'train.log.txt'), 'r') as filein:
                 for i, line in enumerate(filein):
                     line_list = line.strip('\n').split('\t')
                     spam_writer.writerow(line_list)
         print('train-data读写完毕')
 
-        file_name = 'test.log.txt'
-        with open(data_path + 'test.bid.all.csv', 'w', newline='') as csv_file:  # newline防止每两行就空一行
+        with open(os.path.join(data_path, 'test.bid.csv'), 'w', newline='') as csv_file:  # newline防止每两行就空一行
             spam_writer = csv.writer(csv_file, dialect='excel')  # 读要转换的txt文件，文件每行各词间以@@@字符分隔
-            with open(data_path + file_name, 'r') as filein:
+            with open(os.path.join(data_path, 'test.log.txt'), 'r') as filein:
                 for i, line in enumerate(filein):
                     line_list = line.strip('\n').split('\t')
                     spam_writer.writerow(line_list)
         print('test-data读写完毕')
 
-    to_libsvm_encode(data_path, 'all', time_frac_dict)
-    os.remove(os.path.join(data_path, 'train.bid.all.csv'))
-    os.remove(os.path.join(data_path, 'test.bid.all.csv'))
+    to_libsvm_encode(data_path, time_frac_dict)
+    os.remove(os.path.join(data_path, 'train.bid.csv'))
+    os.remove(os.path.join(data_path, 'test.bid.csv'))

@@ -12,7 +12,7 @@ We use benchmark dataset `iPinYou`. To download and  formalize the iPinYou RTB d
 After the formalization, copy `train.log.txt` and `text.log.txt` of each campaign (e.g. `1458`) to `RLBid_EA/data/ipinyou/1458` for further use.
 ### CTR Prediction
 
-Before training the bidding strategy, you first need to predict the click-through rate of each ad impression. We provide pre-trained FM model parameters for 4 datasets. You can use them in conjunction with `RLBid_EA/ctr/generate_pctr.py`.
+Before training the bidding strategy, you first need to predict the click-through rate of each ad impression. We provide pre-trained FM model parameters for 4 datasets in `RLBid_EA/ctr/models`. You can use them in conjunction with `RLBid_EA/ctr/generate_pctr.py`.
 
 You are of course able to train a CTR predictor. `RLBid_EA/ctr/model.py`  implemented 9 classical click-through prediction models.
 
@@ -28,6 +28,8 @@ You are of course able to train a CTR predictor. `RLBid_EA/ctr/model.py`  implem
 | DCN    | Deep & cross network for ad click predictions                | [\[paper\]](https://dl.acm.org/doi/abs/10.1145/3124749.3124754)            |
 | AFM    | Attentional factorization machines: Learning the weight of feature interactions via attention networks | [\[paper\]](https://arxiv.org/abs/1708.04617)                              |
 
+For details please refer to [README]() .
+
 ## Bidding Strategy
 
 This repository implements 2 static bidding strategies and 3 dynamic bidding strategies based on reinforcement learning.
@@ -39,6 +41,8 @@ This repository implements 2 static bidding strategies and 3 dynamic bidding str
 | RLB   | Real-time bidding by reinforcement learning in display advertising | [\[paper\]](https://dl.acm.org/doi/abs/10.1145/3018661.3018702) [\[code\]](https://github.com/han-cai/rlb-dp)              |
 | DRLB  | Budget constrained bidding by model-free reinforcement learning in display advertising | [\[paper\]](https://dl.acm.org/doi/abs/10.1145/3269206.3271748)                                                            |
 | FAB   | A dynamic bidding strategy based on model-free reinforcement learning in display advertising | [\[paper\]](https://ieeexplore.ieee.org/abstract/document/9258910/) [\[code\]](https://github.com/JiaXingBinggan/FAB_expr) |
+
+For details please refer to the README in each folder.
 
 ## License
 
