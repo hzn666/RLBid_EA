@@ -1,6 +1,9 @@
+import os.path
+
 import pandas as pd
 import random
 import math
+import argparse
 
 
 def win_ortb(bid, l):
@@ -94,7 +97,6 @@ def sample_cam(cam_vc):
 
 
 def bidding(original_ecpc, original_ctr, r, dsp_l, pctr, algo, para):
-
     return int(math.sqrt(pctr * dsp_l * para / original_ctr + dsp_l * dsp_l) - dsp_l)
 
 
@@ -208,7 +210,15 @@ def simulate_one_bidding_strategy_with_parameter(cam_data, cam_data_length, cam_
 
 
 if __name__ == '__main__':
-    campaigns = ["1458"]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--campaign_id', default='1458')
+    args = parser.parse_args()
+
+    result_dir = os.path.join('result', args.campaign_id)
+    if not os.path.exists(result_dir):
+        os.makedirs(result_dir)
+
+    campaigns = [args.campaign_id]
     bid_algorithms = ["ortb"]
     dsp_l = 42
     budget_proportions = [2, 4, 8, 16]
@@ -222,7 +232,7 @@ if __name__ == '__main__':
         "ortb": [1 * t for t in range(20, 1400, 30)],
     }
     r = {}  # cpc价值
-    v = {"1458": 1}  # camp选择概率
+    v = {args.campaign_id: 1}  # camp选择概率
     train_data = {}
     test_data = {}
     train_data_length = {}
@@ -232,7 +242,7 @@ if __name__ == '__main__':
 
     for cam in campaigns:
         train_data[cam] = []
-        train_data_df = pd.read_csv("../data/ipinyou/{}/train.bid.all.lin.csv".format(cam))
+        train_data_df = pd.read_csv("../data/ipinyou/{}/train.bid.lin.csv".format(cam))
         for row in train_data_df.itertuples():
             train_data[cam].append(
                 (int(getattr(row, 'clk')), int(getattr(row, 'market_price')), float(getattr(row, 'pctr'))))
@@ -246,7 +256,7 @@ if __name__ == '__main__':
     test_cost = 0.
     for cam in campaigns:
         test_data[cam] = []
-        test_data_df = pd.read_csv("../data/ipinyou/{}/test.bid.all.lin.csv".format(cam))
+        test_data_df = pd.read_csv("../data/ipinyou/{}/test.bid.lin.csv".format(cam))
         for row in test_data_df.itertuples():
             test_data[cam].append(
                 (int(getattr(row, 'clk')), int(getattr(row, 'market_price')), float(getattr(row, 'pctr'))))
@@ -256,16 +266,19 @@ if __name__ == '__main__':
     cam = campaigns[0]
     volume = test_data_length[cam]
 
+    print("prop  alpha      algo  profit     clks  pctrs      bids     imps    budget      cost          rratio  para    ups")
+
     for proportion in budget_proportions:
         dsp_budget = test_cost / proportion
 
         for algo in bid_algorithms:
             algo_one_para[algo] = m_step(train_data, train_data_length, r, base_ctr, dsp_budget, volume, dsp_l, v,
                                          algo_paras, algo)
-        print(proportion, dsp_l, base_ctr[cam]/algo_one_para['ortb'])
+
         for algo in bid_algorithms:
-            perf, bid_list = simulate_one_bidding_strategy_with_parameter(test_data, test_data_length, r, ecpc, base_ctr,
-                                                                dsp_budget, volume, dsp_l, v.copy(), algo,
-                                                                algo_one_para[algo], "%s" % proportion, 0)
+            perf, bid_list = simulate_one_bidding_strategy_with_parameter(test_data, test_data_length, r, ecpc,
+                                                                          base_ctr,
+                                                                          dsp_budget, volume, dsp_l, v.copy(), algo,
+                                                                          algo_one_para[algo], "%s" % proportion, 0)
             print(perf)
-            df = pd.DataFrame(bid_list).to_csv("result/{}-{}.csv".format(campaigns[0], str(proportion)))
+            df = pd.DataFrame(bid_list).to_csv("result/{}/{}.csv".format(campaigns[0], str(proportion)))

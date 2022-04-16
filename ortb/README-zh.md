@@ -1,8 +1,8 @@
 # ORTB
 
-Take dataset `1458` as an example
+以数据集 `1458` 为例
 
-Run `ortb_main.py` to  train and test
+运行 `ortb_main.py` 训练和测试 ORTB
 
 ```
 */RLBid_EA/ortb$ python ortb_main.py --campaign_id=1458
@@ -16,4 +16,4 @@ prop  alpha    algo  profit     clks  pctrs     bids    imps    budget      cost
   16  0.00100  ortb  1241.92    235   202.7876  581440  120746  2826028.4   2826057.0   0.2     140.0  0.0000
 ```
 
-The bid action is stored in `ortb/result/1458`
+出价动作存储在 `ortb/result/1458`
