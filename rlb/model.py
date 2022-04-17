@@ -188,7 +188,8 @@ class RLB_DP_I:
                     break
         return a
 
-    def run(self, auction_in, bid_log_path, csv_log_path, N, c0, max_bid, input_type="file reader", delimiter=" ", save_log=False):
+    def run(self, auction_in, bid_log_path, N, c0, max_bid, input_type="file reader", delimiter=" ",
+            save_log=False):
         auction = 0
         imp = 0
         clk = 0
@@ -237,10 +238,6 @@ class RLB_DP_I:
         if save_log:
             log_in.flush()
             log_in.close()
-
-            pd.DataFrame(data={
-                'bid': bid_list
-            }).to_csv(csv_log_path, index=None)
 
         return auction, imp, clk, cost, pctr
 

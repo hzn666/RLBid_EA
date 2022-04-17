@@ -3,8 +3,7 @@ import json
 dataPath = "../data/"
 projectPath = "../rlb/"
 ipinyouPath = dataPath + "ipinyou/"
-ipinyou_camps = ["1458", "3358", "3427", "3476"]
-# ipinyou_camps = ["1458", "2259", "2261", "2821", "2997", "3358", "3386", "3427", "3476"]
+ipinyou_camps = ["1458"]
 
 ipinyou_max_market_price = 300
 
