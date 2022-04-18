@@ -2,23 +2,14 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import random
 from collections import defaultdict
 
 
-def setup_seed(seed):
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    np.random.seed(seed)
-    random.seed(seed)
-    torch.backends.cudnn.deterministic = True
-
-
 class Net(nn.Module):
-    def __init__(self, feature_numbers, action_numbers, reward_numbers):
+    def __init__(self, feature_num, action_num, reward_num):
         super(Net, self).__init__()
 
-        deep_input_dims = feature_numbers + action_numbers
+        deep_input_dims = feature_num + action_num
         self.bn_input = nn.BatchNorm1d(deep_input_dims)
         self.bn_input.weight.data.fill_(1)
         self.bn_input.bias.data.fill_(0)
@@ -34,36 +25,24 @@ class Net(nn.Module):
             nn.Linear(neuron_nums[1], neuron_nums[2]),
             # nn.BatchNorm1d(neuron_nums[2]),
             nn.ReLU(),
-            nn.Linear(neuron_nums[2], reward_numbers)
+            nn.Linear(neuron_nums[2], reward_num)
         )
 
     def forward(self, input):
         actions_value = self.mlp(self.bn_input(input))
-        # actions_value = self.mlp(input)
 
         return actions_value
 
 
 class RewardNet:
-    def __init__(
-            self,
-            action_space,
-            action_numbers,
-            reward_numbers,
-            feature_numbers,
-            learning_rate=0.001,
-            memory_size=100000,
-            batch_size=32,
-            device='cuda:0',
-    ):
-        self.action_space = action_space  # 动作空间 [-0.08, -0.03, -0.01, 0, 0.01, 0.03, 0.08]
-        self.action_numbers = action_numbers  # 动作数量 1
-        self.reward_numbers = reward_numbers  # 奖励数量 1
-        self.feature_numbers = feature_numbers  # 动作维度 7
-        self.lr = learning_rate  # 学习率
-        self.memory_size = memory_size  # 经验池
-        self.batch_size = batch_size
-        self.device = device
+    def __init__(self, config):
+        self.action_num = 1  # 动作数量 1
+        self.reward_num = 1  # 奖励数量 1
+        self.feature_num = config['feature_num']  # 动作维度 7
+        self.lr = config['lr']  # 学习率
+        self.memory_size = config['memory_size']  # 经验池
+        self.batch_size = config['batch_size']
+        self.device = config['device']
 
         if not hasattr(self, 'memory_S_counter'):
             self.memory_S_counter = 0
@@ -71,17 +50,14 @@ class RewardNet:
         if not hasattr(self, 'memory_D_counter'):
             self.memory_D_counter = 0
 
-        # 设置随机数种子
-        # setup_seed(1)
-
         # 将经验池<状态-动作-累积奖励>中的转换组初始化为0
         self.memory_S = defaultdict()
 
         # 将经验池<状态-动作-累积奖励中最大>中的转换组初始化为0
-        self.memory_D = np.zeros((self.memory_size, self.feature_numbers + 2))
+        self.memory_D = np.zeros((self.memory_size, self.feature_num + 2))
 
-        self.model_reward, self.real_reward = Net(self.feature_numbers, self.action_numbers, self.reward_numbers).to(
-            self.device), Net(self.feature_numbers, self.action_numbers, self.reward_numbers).to(self.device)
+        self.model_reward, self.real_reward = Net(self.feature_num, self.action_num, self.reward_num).to(
+            self.device), Net(self.feature_num, self.action_num, self.reward_num).to(self.device)
 
         # 优化器
         self.optimizer = torch.optim.RMSprop(self.model_reward.parameters(), momentum=0.95, weight_decay=1e-5)
@@ -117,8 +93,8 @@ class RewardNet:
 
         batch_memory = self.memory_D[sample_index, :]
 
-        state_actions = torch.FloatTensor(batch_memory[:, :self.feature_numbers + 1]).to(self.device)
-        real_reward = torch.unsqueeze(torch.FloatTensor(batch_memory[:, self.feature_numbers + 1]), 1).to(self.device)
+        state_actions = torch.FloatTensor(batch_memory[:, :self.feature_num + 1]).to(self.device)
+        real_reward = torch.unsqueeze(torch.FloatTensor(batch_memory[:, self.feature_num + 1]), 1).to(self.device)
 
         model_reward = self.model_reward.forward(state_actions)
 
