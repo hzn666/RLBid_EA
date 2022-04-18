@@ -3,12 +3,12 @@ import numpy as np
 import datetime
 import os
 import random
-import fab.RL_brain_fab as td3
+import RL_brain_fab as td3
 
 import torch
 import torch.utils.data
 
-from fab import config
+import config
 import logging
 import sys
 
@@ -160,11 +160,11 @@ def get_model(args, device):
 
 def get_dataset(args):
     # 数据地址
-    data_path = args.data_path + args.dataset_name + args.campaign_id
+    data_path = os.path.join(args.data_path + args.dataset_name, args.campaign_id)
 
     # 获取数据
-    train_data_df = pd.read_csv(data_path + 'train.bid.' + args.sample_type + '.lin.csv')
-    test_data_df = pd.read_csv(data_path + 'test.bid.' + args.sample_type + '.lin.csv')
+    train_data_df = pd.read_csv(os.path.join(data_path, 'train.bid.lin.csv'))
+    test_data_df = pd.read_csv(os.path.join(data_path, 'test.bid.lin.csv'))
 
     # 获取每日预算、ecpc、平均点击率、平均成交价
     budget = []
@@ -203,28 +203,36 @@ def reward_func(reward_type, fab_clks, hb_clks, fab_cost, hb_cost, fab_pctrs):
         return fab_clks
 
 
+def choose_init_base_bid(config):
+    base_bid_path = os.path.join('../lin/result/ipinyou/{}/normal/test'.format(config['campaign_id']),
+                                 'test_bid_log.csv')
+    if not os.path.exists(base_bid_path):
+        raise FileNotFoundError('Run LIN first before you train FAB')
+    data = pd.read_csv(base_bid_path)
+    base_bid = data[data['budget_prop'] == config['budget_para']].iloc[0]['base_bid']
+    avg_pctr = data[data['budget_prop'] == config['budget_para']].iloc[0]['average_pctr']
+
+    return avg_pctr, base_bid
+
+
 if __name__ == '__main__':
     # 获取参数
     args = config.init_parser()
-    time_fraction = args.fraction
+    time_fraction = args.time_fraction
     time_fraction_str = str(time_fraction) + '_time_fraction'
     # 获取数据集
     train_data_df, test_data_df, ecpc, avg_mprice, budget = get_dataset(args)
     # 设置随机数种子
     setup_seed(args.seed)
     # 记录日志地址
-    log_dirs = [args.save_log_dir, args.save_log_dir + args.campaign_id]
+    log_dirs = [args.save_log_dir, os.path.join(args.save_log_dir, args.campaign_id)]
     for log_dir in log_dirs:
         if not os.path.exists(log_dir):
             os.mkdir(log_dir)
-    # 记录模型参数地址
-    param_dirs = [args.save_param_dir, args.save_param_dir + args.campaign_id]
-    for param_dir in param_dirs:
-        if not os.path.exists(param_dir):
-            os.mkdir(param_dir)
 
     logging.basicConfig(level=logging.DEBUG,
-                        filename=args.save_log_dir + str(args.campaign_id) + args.model_name + '_output.log',
+                        filename=os.path.join(args.save_log_dir, str(args.campaign_id),
+                                              args.model_name + '_output.log'),
                         datefmt='%Y/%m/%d %H:%M:%S',
                         format='%(asctime)s - %(name)s - %(levelname)s - %(lineno)d - %(module)s - %(message)s')
 
@@ -235,34 +243,25 @@ if __name__ == '__main__':
     stream_handler.setLevel(logging.INFO)
     logger.addHandler(stream_handler)
     # 预测结果存放文件夹位置 FAB
-    submission_path = "../fab/result-new/"
-    if not os.path.exists(submission_path):
-        os.mkdir(submission_path)
+    result_path = os.path.join(args.result_path, args.campaign_id)
+    if not os.path.exists(result_path):
+        os.mkdir(result_path)
 
     device = torch.device(args.device)  # 指定运行设备
 
     logger.info(args.campaign_id)
     logger.info('RL model ' + args.model_name + ' has been training')
-    logger.info(args)
+    # logger.info(args)
 
     # 生成TD3实例
     rl_model = get_model(args, device)
-    B = [b / args.budget_para[0] for b in budget]
+    B = [b / args.budget_para for b in budget]
 
-    base_bid = pd.read_csv('../data/ipinyou/base_bid.csv')
-    dataset_dict = {
-        '1458': 0,
-        '3358': 1,
-        '3427': 2,
-        '3476': 3
-    }
-    dataset = dataset_dict[args.campaign_id.strip('/')]
-    avg_ctr = base_bid.loc[dataset, 'avg_pctr']
-    hb_base = base_bid.loc[dataset, str(args.budget_para[0])]
+    avg_ctr, hb_base = choose_init_base_bid(vars(args))
 
     train_losses = []
 
-    logger.info('para:{}, budget:{}, base bid: {}'.format(args.budget_para[0], B, hb_base))
+    logger.info('para:{}, budget:{}, base bid: {}'.format(args.budget_para, B, hb_base))
     logger.info('\tclks\treal_clks\tbids\timps\tcost')
 
     start_time = datetime.datetime.now()
@@ -287,8 +286,6 @@ if __name__ == '__main__':
             current_day_win_reward = []
             tmp_state = [1, 0, 0, 0]
             init_state = [1, 0, 0, 0]
-            # tmp_state = [0]
-            # init_state = [0]
 
             done = 0
             for t in range(time_fraction):
@@ -319,11 +316,7 @@ if __name__ == '__main__':
                                   res_[6] / current_day_budget,
                                   res_[0] / res_[5] if res_[5] else 0,
                                   res_[5] / res_[4] if res_[4] else 0]
-                    # next_state = [(budget / current_day_budget) / left_hour_ratio if left_hour_ratio else (
-                    #         budget / current_day_budget)]
-                    # next_state = [res_[6] / current_day_budget]
-                    # next_state = [res_[0] / res_[5] if res_[5] else 0]
-                    # next_state = [res_[5] / res_[4] if res_[4] else 0]
+
                     tmp_state = next_state
 
                     hb_bid_datas = generate_bid_price(hour_datas[:, ctr_index] * hb_base / avg_ctr)
@@ -343,7 +336,6 @@ if __name__ == '__main__':
                     rl_model.store_transition(transitions)
                     if args.reward_type == 'nn':
                         epoch_state_action_pair.append((state, action, r_t, next_state, done))
-
 
                     if rl_model.memory.memory_counter >= args.rl_batch_size:
                         critic_loss = rl_model.learn()
@@ -365,9 +357,8 @@ if __name__ == '__main__':
             test_data = test_data[['clk', 'pctr', 'market_price', time_fraction_str]].values.astype(float)
             tmp_test_state = [1, 0, 0, 0]
             init_test_state = [1, 0, 0, 0]
-            # tmp_test_state = [0]
-            # init_test_state = [0]
-            budget = np.sum(test_data_df[test_data_df.day.isin([day])].market_price) / args.budget_para[0]
+
+            budget = np.sum(test_data_df[test_data_df.day.isin([day])].market_price) / args.budget_para
             current_day_budget = budget
             hour_t = 0
             for t in range(time_fraction):
@@ -405,11 +396,7 @@ if __name__ == '__main__':
                                   res_[6] / current_day_budget,
                                   res_[0] / res_[5] if res_[5] else 0,
                                   res_[5] / res_[4] if res_[4] else 0]
-                    # next_state = [(budget / current_day_budget) / left_hour_ratio if left_hour_ratio else (
-                    #         budget / current_day_budget)]
-                    # next_state = [res_[6] / current_day_budget]
-                    # next_state = [res_[0] / res_[5] if res_[5] else 0]
-                    # next_state = [res_[5] / res_[4] if res_[4] else 0]
+
                     tmp_test_state = next_state
 
                     hour_t += 1
@@ -423,17 +410,17 @@ if __name__ == '__main__':
                                    columns=['ep', 'clks', 'real_clks', 'pctrs', 'real_pctrs', 'bids', 'imps', 'cost',
                                             'loss'])
     train_record_df.to_csv(
-        submission_path + args.campaign_id.strip('/') + '_' + 'fab_train_records_' + args.reward_type + '_' + str(
-            args.budget_para[0]) + '.csv', index=None)
+        os.path.join(result_path, 'fab_train_records_' + args.reward_type + '_' + str(
+            args.budget_para) + '.csv'), index=None)
 
     test_record_df = pd.DataFrame(data=ep_test_records,
                                   columns=['ep', 'clks', 'real_clks', 'pctrs', 'real_pctrs', 'bids', 'imps', 'cost',
                                            'reward'])
     test_record_df.to_csv(
-        submission_path + args.campaign_id.strip('/') + '_' + 'fab_test_records_' + args.reward_type + '_' + str(
-            args.budget_para[0]) + '.csv', index=None)
+        os.path.join(result_path, 'fab_test_records_' + args.reward_type + '_' + str(
+            args.budget_para) + '.csv'), index=None)
 
     test_action_df = pd.DataFrame(data=ep_test_actions)
     test_action_df.to_csv(
-        submission_path + args.campaign_id.strip('/') + '_' + 'fab_test_actions_' + args.reward_type + '_' + str(
-            args.budget_para[0]) + '.csv', index=None)
+        os.path.join(result_path, 'fab_test_actions_' + args.reward_type + '_' + str(
+            args.budget_para) + '.csv'), index=None)

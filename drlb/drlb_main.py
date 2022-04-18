@@ -195,7 +195,7 @@ def state_(init_budget,
            slot_bid_price_array, current_day_imp_num, slot_win_imp, slot_real_imp, slot_real_clk, slot_cost, slot_reward, slot_done
 
 
-def choose_init_lamda(config, budget_para):
+def choose_init_lambda(config, budget_para):
     base_bid_path = os.path.join('../lin/result/ipinyou/{}/normal/test'.format(config['campaign_id']),
                                  'test_bid_log.csv')
     if not os.path.exists(base_bid_path):
@@ -234,7 +234,7 @@ def run_train(budget_para):
     total_budget = get_budget(train_data)
     total_budget = np.divide(total_budget, budget_para)
 
-    init_lambda = choose_init_lamda(config, budget_para)
+    init_lambda = choose_init_lambda(config, budget_para)
 
     epoch_train_record = []
     epoch_action = []
@@ -507,7 +507,7 @@ def run_test(budget_para):
     total_budget = get_budget(test_data)
     total_budget = np.divide(total_budget, budget_para)
 
-    init_lambda = choose_init_lamda(config, budget_para)
+    init_lambda = choose_init_lambda(config, budget_para)
 
     episode_lambda = []
     episode_action = []

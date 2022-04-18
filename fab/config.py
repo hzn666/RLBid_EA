@@ -16,8 +16,8 @@ def init_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_path', default='../data/')
     parser.add_argument('--dataset_name', default='ipinyou/', help='ipinyou, cretio, yoyi, avazu')
-    parser.add_argument('--campaign_id', default='3476/', help='1458, 3427')
-    parser.add_argument('--episodes', type=int, default=3000)
+    parser.add_argument('--campaign_id', default='1458', help='1458, 3427')
+    parser.add_argument('--episodes', type=int, default=3)
     parser.add_argument('--model_name', default='FAB')
     parser.add_argument('--lr_A', type=float, default=3e-4)
     parser.add_argument('--lr_C', type=float, default=3e-4)
@@ -27,16 +27,14 @@ def init_parser():
     parser.add_argument('--rl_batch_size', type=int, default=32)
     parser.add_argument('--rl_early_stop_iter', type=int, default=20)
     parser.add_argument('--device', default='cuda:0')
-    parser.add_argument('--save_param_dir', default='../fab/model/')
     parser.add_argument('--save_log_dir', default='../fab/log/')
+    parser.add_argument('--result_path', type=str, default='../fab/result/')
     parser.add_argument('--seed', type=int, default=1)
-    parser.add_argument('--fraction', type=int, default=96)
+    parser.add_argument('--time_fraction', type=int, default=96)
     parser.add_argument('--input_dims', type=int, default=4)
 
-    parser.add_argument('--sample_type', default='all', help='all')
-
     parser.add_argument('--budget', type=float, default=16e6)
-    parser.add_argument('--budget_para', type=list, default=[16], help='1,2,4,8')  # 预算调整比例
+    parser.add_argument('--budget_para', type=int, default=2, help='2,4,8,16')  # 预算调整比例
 
     parser.add_argument('--reward_type', type=str, default='op', help='op, nop_2.0, clk')
     # op 缩放，nop 不缩放，clk, 直接使用点击数做奖励
