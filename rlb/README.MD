@@ -1,5 +1,7 @@
 # RLB
 
+Chinese README: [README-zh](https://github.com/hzn666/RLBid_EA/blob/master/rlb/README-zh.MD)
+
 ## Parameters config
 
 * Alter line 6 in `config.py` to specify the dataset
