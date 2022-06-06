@@ -18,36 +18,6 @@ def setup_seed(seed):
     torch.backends.cudnn.deterministic = True
 
 
-class RewardMemory(object):
-    # 初始化
-    def __init__(self, capacity, seed):
-        random.seed(seed)
-        self.capacity = capacity  # 经验池容量
-        self.buffer = []  # 经验池
-        self.position = 0  # 经验池索引位置
-
-    # 加入经验池
-    def push(self, state, action, reward, next_state, done):
-        # 防止索引报错 先append一个None
-        if len(self.buffer) < self.capacity:
-            self.buffer.append(None)
-        self.buffer[self.position] = (state, action, reward, next_state, done)  # 加入经验
-        self.position = (self.position + 1) % self.capacity  # 更新索引
-
-    # 采样经验
-    def sample(self, batch_size, out=False):
-        batch = random.sample(self.buffer, batch_size)  # 随机采样经验
-        if out:
-            print(np.array(batch).shape)
-        # 将batch中的状态 动作 奖励 下一状态 完成标志单独抽出来
-        state, action, reward, next_state, done = map(np.stack, zip(*batch))
-        return state, action, reward, next_state, done
-
-    # 长度
-    def __len__(self):
-        return len(self.buffer)
-
-
 class Memory(object):
     def __init__(self, memory_size, transition_lens, device):
         self.device = device
@@ -254,26 +224,6 @@ class Actor(nn.Module):
         return action_means
 
 
-class RewardNet(nn.Module):
-    def __init__(self, state_nums, action_nums):
-        super(RewardNet, self).__init__()
-        self.state_dim = state_nums
-        self.action_dim = action_nums
-
-        self.fc1 = nn.Linear(state_nums + action_nums, 100)
-        self.fc2 = nn.Linear(100, 100)
-        self.fc3 = nn.Linear(100, 100)
-        self.fc4 = nn.Linear(100, 1)
-
-    def forward(self, state_dim, action_dim):
-        x = torch.cat([state_dim, action_dim], 1)
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
-        x = self.fc4(x)
-        return x
-
-
 class TD3_Model():
     def __init__(
             self,
@@ -292,7 +242,6 @@ class TD3_Model():
         self.action_nums = action_nums
         self.lr_A = lr_A
         self.lr_C = lr_C
-        self.lr = 0.001
         self.gamma = reward_decay
         self.memory_size = int(memory_size)
         self.batch_size = batch_size
@@ -307,9 +256,6 @@ class TD3_Model():
         self.input_dims = input_dims
 
         self.memory = Memory(self.memory_size, self.input_dims * 2 + self.action_nums + 2, self.device)
-        self.rewardmemory = RewardMemory(self.memory_size, random_seed)
-        self.RewardNet = RewardNet(self.input_dims, 1).to(self.device)
-        self.reward_optimizer = torch.optim.Adam(self.RewardNet.parameters(), lr=self.lr)
 
         self.Actor = Actor(self.input_dims, self.action_nums, self.neuron_nums).to(self.device)
         self.Critic = Critic(self.input_dims, self.action_nums, self.neuron_nums).to(self.device)
@@ -425,30 +371,3 @@ class TD3_Model():
             self.soft_update(self.Critic, self.Critic_)
             self.soft_update(self.Actor, self.Actor_)
         return critic_loss_r
-
-    def learn_reward(self):
-        # 从经验采样数据
-        state_batch, action_batch, reward_batch, next_state_batch, done_batch = self.rewardmemory.sample(
-            batch_size=self.batch_size)
-        # 处理数据
-        batch_state = torch.FloatTensor(state_batch).to(self.device)
-        batch_action = torch.FloatTensor(action_batch).to(self.device).unsqueeze(1)
-        batch_reward = torch.FloatTensor(reward_batch).to(self.device).unsqueeze(1)
-
-        # 送入网络得到奖励
-        model_reward = self.RewardNet(batch_state, batch_action)
-
-        # 计算损失并更新网络
-        loss = self.loss_func(model_reward, batch_reward)
-        self.reward_optimizer.zero_grad()
-        loss.backward()
-        self.reward_optimizer.step()
-
-        return loss.item()
-
-    def get_reward(self, batch_state, batch_action):
-        state = torch.FloatTensor(batch_state).to(self.device).unsqueeze(0)
-        action = list([batch_action])
-        action = torch.FloatTensor(action).to(self.device).unsqueeze(0)
-
-        return self.RewardNet(state, action).detach().cpu().numpy()[0]

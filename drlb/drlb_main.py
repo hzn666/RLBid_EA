@@ -654,7 +654,7 @@ if __name__ == '__main__':
     parser.add_argument('--feature_num', type=int, default=7)
     parser.add_argument('--action_num', type=int, default=7)
     parser.add_argument('--budget_para', default=[2, 4, 8, 16])
-    parser.add_argument('--train_epochs', type=int, default=10)
+    parser.add_argument('--train_epochs', type=int, default=1000)
     parser.add_argument('--replace_target_iter', type=int, default=100)
     parser.add_argument('--memory_size', type=int, default=100000)
     parser.add_argument('--batch_size', type=int, default=32)

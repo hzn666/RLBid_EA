@@ -168,17 +168,12 @@ def get_dataset(args):
 
     # 获取每日预算、ecpc、平均点击率、平均成交价
     budget = []
-    ecpc = []
-    avg_mprice = []
     for index, day in enumerate(train_data_df.day.unique()):
         current_day_budget = np.sum(train_data_df[train_data_df.day.isin([day])].market_price)
-        current_day_clk = np.sum(train_data_df[train_data_df.day.isin([day])].clk)
 
         budget.append(current_day_budget)
-        ecpc.append(current_day_budget / current_day_clk)
-        avg_mprice.append(current_day_budget / len(train_data_df))
 
-    return train_data_df, test_data_df, ecpc, avg_mprice, budget
+    return train_data_df, test_data_df, budget
 
 
 def reward_func(reward_type, fab_clks, hb_clks, fab_cost, hb_cost, fab_pctrs):
@@ -221,7 +216,7 @@ if __name__ == '__main__':
     time_fraction = args.time_fraction
     time_fraction_str = str(time_fraction) + '_time_fraction'
     # 获取数据集
-    train_data_df, test_data_df, ecpc, avg_mprice, budget = get_dataset(args)
+    train_data_df, test_data_df, budget = get_dataset(args)
     # 设置随机数种子
     setup_seed(args.seed)
     # 记录日志地址
@@ -276,14 +271,13 @@ if __name__ == '__main__':
         train_records = [0, 0, 0, 0, 0, 0, 0]
         # win_clks, real_clks, win_pctr, real_pctr, bids, imps, cost
         critic_loss = 0
-        epoch_state_action_pair = []
 
         for day_index, day in enumerate(train_data_df.day.unique()):
             train_data = train_data_df[train_data_df.day.isin([day])]
             train_data = train_data[['clk', 'pctr', 'market_price', time_fraction_str]].values.astype(float)
             budget = B[day_index]
             current_day_budget = budget
-            current_day_win_reward = []
+
             tmp_state = [1, 0, 0, 0]
             init_state = [1, 0, 0, 0]
 
@@ -291,9 +285,6 @@ if __name__ == '__main__':
             for t in range(time_fraction):
                 if budget > 0:
                     hour_datas = train_data[train_data[:, hour_index] == t]
-                    if args.reward_type == 'nn':
-                        if len(rl_model.rewardmemory) >= args.rl_batch_size:
-                            reward_loss = rl_model.learn_reward()
 
                     state = torch.tensor(init_state).float() if not t else torch.tensor(tmp_state).float()
 
@@ -322,11 +313,8 @@ if __name__ == '__main__':
                     hb_bid_datas = generate_bid_price(hour_datas[:, ctr_index] * hb_base / avg_ctr)
                     res_hb = bid_main(hb_bid_datas, hour_datas, budget)
                     budget -= res_[-1]
-                    if args.reward_type == 'nn':
-                        r_t = rl_model.get_reward(state, action)[0]
-                    else:
-                        r_t = reward_func(args.reward_type, res_[0], res_hb[0], res_[6], res_hb[4], res_[2])
-                    current_day_win_reward.append(res_[2])
+                    r_t = reward_func(args.reward_type, res_[0], res_hb[0], res_[6], res_hb[6], res_[2])
+
                     transitions = torch.cat([state, torch.tensor([action]).float(),
                                              torch.tensor(next_state).float(),
                                              torch.tensor([done]).float(), torch.tensor([r_t]).float()],
@@ -334,15 +322,9 @@ if __name__ == '__main__':
                         0).to(device)
 
                     rl_model.store_transition(transitions)
-                    if args.reward_type == 'nn':
-                        epoch_state_action_pair.append((state, action, r_t, next_state, done))
 
                     if rl_model.memory.memory_counter >= args.rl_batch_size:
                         critic_loss = rl_model.learn()
-
-            for (s, a, r, s_, d) in tuple(epoch_state_action_pair):
-                max_reward = max(r, np.sum(current_day_win_reward))
-                rl_model.rewardmemory.push(s, a, max_reward, s_, d)
 
         ep_train_records.append([ep] + train_records + [critic_loss])
         # print(ep, 'train', train_records, critic_loss)
@@ -382,10 +364,7 @@ if __name__ == '__main__':
                     res_hb = bid_main(hb_bid_datas, hour_datas, budget)
 
                     budget -= res_[-1]
-                    if args.reward_type == 'nn':
-                        r_t = rl_model.get_reward(state, action)[0]
-                    else:
-                        r_t = reward_func(args.reward_type, res_[0], res_hb[0], res_[6], res_hb[4], res_[2])
+                    r_t = reward_func(args.reward_type, res_[0], res_hb[0], res_[6], res_hb[6], res_[2])
                     test_rewards += r_t
 
                     left_hour_ratio = (time_fraction - 1 - t) / (time_fraction - 1) if t <= (

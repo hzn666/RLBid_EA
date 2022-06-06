@@ -17,7 +17,7 @@ def init_parser():
     parser.add_argument('--data_path', default='../data/')
     parser.add_argument('--dataset_name', default='ipinyou/', help='ipinyou, cretio, yoyi, avazu')
     parser.add_argument('--campaign_id', default='1458', help='1458, 3427')
-    parser.add_argument('--episodes', type=int, default=3)
+    parser.add_argument('--episodes', type=int, default=3000)
     parser.add_argument('--model_name', default='FAB')
     parser.add_argument('--lr_A', type=float, default=3e-4)
     parser.add_argument('--lr_C', type=float, default=3e-4)
